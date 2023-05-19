@@ -1,7 +1,3 @@
-### 1. Prerequisites ###
-#tu nic nie ma
-
-### 2. Missing Values ###
 cols_with_missing = [col for col in X_train.columns
                      if X_train[col].isnull().any()]
 
@@ -20,15 +16,12 @@ imputed_X_valid.columns = X_valid.columns
 #impute + flag - dodatkowo kolumna informująca, czy wartość była NaN
 X_train_plus = X_train.copy()
 X_valid_plus = X_valid.copy()
-
 for col in cols_with_missing:
     X_train_plus[col + '_was_missing'] = X_train_plus[col].isnull()
     X_valid_plus[col + '_was_missing'] = X_valid_plus[col].isnull()
-
 my_imputer = SimpleImputer()
 imputed_X_train_plus = pd.DataFrame(my_imputer.fit_transform(X_train_plus))
 imputed_X_valid_plus = pd.DataFrame(my_imputer.transform(X_valid_plus))
-
 imputed_X_train_plus.columns = X_train_plus.columns
 imputed_X_valid_plus.columns = X_valid_plus.columns
 
@@ -44,10 +37,8 @@ drop_X_valid = X_valid.select_dtypes(exclude=['object'])
 #'Sometimes' -> 1, 
 #'Always'    -> 2
 from sklearn.preprocessing import OrdinalEncoder
-
 label_X_train = X_train.copy()
 label_X_valid = X_valid.copy()
-
 ordinal_encoder = OrdinalEncoder()
 label_X_train[object_cols] = ordinal_encoder.fit_transform(X_train[object_cols])
 label_X_valid[object_cols] = ordinal_encoder.transform(X_valid[object_cols])
@@ -64,25 +55,18 @@ from sklearn.preprocessing import OneHotEncoder
 OH_encoder = OneHotEncoder(handle_unknown='ignore', sparse=False)
 OH_cols_train = pd.DataFrame(OH_encoder.fit_transform(X_train[object_cols]))
 OH_cols_valid = pd.DataFrame(OH_encoder.transform(X_valid[object_cols]))
-
 # One-hot encoding removed index; put it back
 OH_cols_train.index = X_train.index
 OH_cols_valid.index = X_valid.index
-
 # Remove categorical columns (will replace with one-hot encoding)
 num_X_train = X_train.drop(object_cols, axis=1)
 num_X_valid = X_valid.drop(object_cols, axis=1)
-
 # Add one-hot encoded columns to numerical features
 OH_X_train = pd.concat([num_X_train, OH_cols_train], axis=1)
 OH_X_valid = pd.concat([num_X_valid, OH_cols_valid], axis=1)
-
 # Ensure all columns have string type
 OH_X_train.columns = OH_X_train.columns.astype(str)
 OH_X_valid.columns = OH_X_valid.columns.astype(str)
-
-print("MAE from Approach 3 (One-Hot Encoding):") 
-print(score_dataset(OH_X_train, OH_X_valid, y_train, y_valid))
 
 #zwykle onehot > ordinal > drop
 #onehot niepraktyczne przy dużej liczbie unikalnych wartości
@@ -125,8 +109,27 @@ from sklearn.model_selection import cross_val_score
 scores = -1 * cross_val_score(my_pipeline, X, y,
                               cv=5, #liczba foldów
                               scoring='neg_mean_absolute_error') #konwencja większy wynik = lepszy, ale w kursach używane samo mae (czyli mniejszy = lepszy)
-print("MAE scores:\n", scores)
-print("mean MAE score:\n", scores.mean())
+
+#hyperparameter optimization
+from sklearn.model_selection import GridSearchCV
+#TODO
 
 ### 6. XGBoost ###
+from xgboost import XGBRegressor
+
+my_model = XGBRegressor()
+my_model.fit(X_train, y_train)
+
+my_model = XGBRegressor(n_estimators=1000, learning_rate=0.05)
+my_model.fit(X_train, y_train)
+
+my_model = XGBRegressor(n_estimators=1000, learning_rate=0.05,
+                        early_stopping_rounds=5)
+my_model.fit(X_train, y_train, 
+             eval_set=[(X_valid, y_valid)], 
+             verbose=False)
+n_estimators = my_model.best_iteration+1 #zaczyna się od 0;
+                                         #po znalezieniu fitować jeszcze raz, bez early_stopping_rounds
+
 ### 7. Data Leakage ###
+#tylko teoria: data leakage i train test contamination

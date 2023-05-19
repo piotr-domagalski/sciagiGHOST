@@ -1,28 +1,32 @@
 import pandas as pd
 
-### 1. Creating, Reading and Writing ###
-pd.DataFrame({'Yes': [50, 21], 'No': [131, 2]})
-
+pd.DataFrame({'Yes': [50, 21], 'No': [131, 2]}) #dict kolumn
 pd.DataFrame({'Bob': ['I liked it.', 'It was awful.'], 
               'Sue': ['Pretty good.', 'Bland.']},
              index=['Product A', 'Product B'])
 
 pd.Series([30, 35, 40], index=['2015 Sales', '2016 Sales', '2017 Sales'], name='Product A')
 
-wine_reviews = pd.read_csv("../input/wine-reviews/winemag-data-130k-v2.csv", index_col=0)
-wine_reviews.shape
-wine_reviews.head()
-
-### 2. Indexing, Selecting & Assigning ###
+reviews = pd.read_csv("../input/wine-reviews/winemag-data-130k-v2.csv", index_col=0)
 reviews.country
 reviews['country']
 
+reviews
+reviews.shape
+reviews.head()
+reviews.describe()
+#różne describe'y dla zmiennych liczbowych i stringów
+reviews.points.describe()
+reviews.taster_name.describe()
+
+reviews.points.mean()
+reviews.taster_name.value_counts()
+
 #po indeksie
-reviews.iloc[0]          # zerowy    rzad
-reviews.iloc[:, 0]       #wszystkie  rzedy zerowej kolumny
-reviews.iloc[2:4, 0]     #2 i 3      rzad  zerowej kolumny
-reviews.iloc[[1,2,5], 0] #wybrane    rzedy zerowej kolumny
-reviews.iloc[-5:]        #ostatnie 5 rzedow 
+reviews.iloc[0]          #zerowy rzad
+reviews.iloc[1, 0]       #pierwszy rzad zerowej kolumny
+reviews.iloc[2:4]        #pythonowy range, też '-5:' ':' itd
+reviews.iloc[[1,2,5]]    #lista
 
 #po nazwach kolumn/wierszy
 reviews.loc[0, 'country']
@@ -30,7 +34,7 @@ reviews.loc[:, ['taster_name', 'taster_twitter_handle', 'points']]
 reviews.loc[:, 'points':'taster_twitter_handle'] # w przypadku loc operator : wybiera włącznie z ostatnim elementem, nie jak w pythonie
 
 #warunkowe
-reviews.country == 'Italy' #porównanie serii z wartością zwraca serię booleanów
+reviews.country == 'Italy' #zwraca serię booleanów
 reviews[reviews.country == 'Italy'] #którą można użyć do indeksowania
 reviews.loc[(reviews.country == 'Italy') & (reviews.points >= 90)]
 reviews.loc[(reviews.country == 'Italy') | (reviews.points >= 90)]
@@ -50,17 +54,6 @@ reviews['critic']
 reviews['index_backwards'] = range(len(reviews), 0, -1) #przypisanie iterable
 reviews['index_backwards']
 
-### 3. Summary Functions and Maps ###
-reviews
-reviews.head()
-reviews.describe()
-#różne describe'y dla zmiennych liczbowych i stringów
-reviews.points.describe()
-reviews.taster_name.describe()
-
-reviews.points.mean()
-reviews.taster_name.value_counts()
-
 #map - dla serii
 review_points_mean = reviews.points.mean()
 reviews.points.map(lambda p: p - review_points_mean)
@@ -76,7 +69,7 @@ reviews.apply(remean_points, axis='columns') #axis='columns' i axis=1 wywołuje 
 
 #wbudowane mapy
 review_points_mean = reviews.points.mean()
-reviews.points - review_points_mean #typowe operacje pythonowe - arytmetyczne, warunkowe
+reviews.points - review_points_mean #typowe operacje pythonowe: arytmetyczne, warunkowe
 reviews.country + " - " + reviews.region_1 #konkatenacja stringów
 
 ### 4. Grouping and Sorting ###
@@ -112,10 +105,8 @@ reviews.rename_axis("wines", axis='rows').rename_axis("fields", axis='columns')
 
 canadian_youtube = pd.read_csv("../input/youtube-new/CAvideos.csv")
 british_youtube = pd.read_csv("../input/youtube-new/GBvideos.csv")
-
 pd.concat([canadian_youtube, british_youtube]) #dokleja na dole
 
 left = canadian_youtube.set_index(['title', 'trending_date'])
 right = british_youtube.set_index(['title', 'trending_date'])
-
 left.join(right, lsuffix='_CAN', rsuffix='_UK') #dokleja z boku
